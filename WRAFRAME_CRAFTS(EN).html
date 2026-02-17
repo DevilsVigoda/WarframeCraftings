@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warframe · Крафтовый чек-лист (ингредиенты)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+            background: #0b0c0f;
+            color: #e2e6ea;
+            padding: 2rem 1rem;
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: #1a1d23;
+            border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            border: 1px solid #333842;
+        }
+        .header {
+            background: #23272f;
+            padding: 1.8rem 2rem 1.4rem;
+            border-bottom: 1px solid #373e4b;
+        }
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 500;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #b7c9e2, #8fb1e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.25rem;
+        }
+        .header .sub {
+            color: #9aa7b9;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .header .sub span {
+            background: #2f3640;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            color: #cad2db;
+            font-size: 0.85rem;
+        }
+        .info-bar {
+            background: #13161c;
+            padding: 0.8rem 2rem;
+            font-size: 0.95rem;
+            color: #b6c1d0;
+            border-bottom: 1px solid #2b313b;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .info-bar .warning {
+            color: #ffb347;
+            background: rgba(255, 180, 71, 0.1);
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            border-left: 3px solid #ffb347;
+        }
+        .info-bar .updated {
+            font-family: monospace;
+            background: #1f242c;
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+        }
+        .toc {
+            background: #171b22;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #303642;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem 2.5rem;
+        }
+        .toc a {
+            color: #93b5e3;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.05rem;
+            border-bottom: 2px solid transparent;
+            transition: 0.2s;
+            padding-bottom: 4px;
+        }
+        .toc a:hover {
+            border-bottom-color: #6c9bd2;
+            color: #c1d6f0;
+        }
+        .section {
+            padding: 1.5rem 2rem 2rem;
+            border-bottom: 1px solid #2d333e;
+        }
+        .section:last-child {
+            border-bottom: none;
+        }
+        .section h2 {
+            font-size: 1.9rem;
+            font-weight: 400;
+            margin-bottom: 1.4rem;
+            color: #d6e2f5;
+            border-left: 6px solid #4f7eb3;
+            padding-left: 1.2rem;
+        }
+        .section h3 {
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin: 2rem 0 1.2rem 0;
+            color: #b9cbee;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .checklist {
+            background: #13171f;
+            border-radius: 24px;
+            padding: 0.2rem 0;
+            border: 1px solid #29303b;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1.8rem;
+            border-bottom: 1px solid #262d38;
+            transition: background 0.15s;
+            cursor: default;
+        }
+        .checklist-item:last-child {
+            border-bottom: none;
+        }
+        .checklist-item:hover {
+            background: #1c212b;
+        }
+        .checklist-item input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            accent-color: #4f9c5e;
+            transform: scale(1.1);
+            margin-right: 24px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .recipe-content {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px 20px;
+            font-size: 1.1rem;
+            width: 100%;
+        }
+        .ingredient-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 15px;
+        }
+        .item {
+            display: inline-flex;
+            align-items: center;
+            background: #232a35;
+            padding: 5px 14px 5px 8px;
+            border-radius: 40px;
+            border: 1px solid #415067;
+            gap: 8px;
+            font-weight: 480;
+        }
+        .item img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 2px black);
+        }
+        .arrow {
+            font-size: 1.7rem;
+            color: #798da8;
+            margin: 0 2px;
+            font-weight: 300;
+            line-height: 1;
+        }
+        .result {
+            background: #1e3a2e;
+            border-color: #36804b;
+        }
+        .small-note {
+            font-size: 0.9rem;
+            color: #a3b6d4;
+            background: #1e2530;
+            padding: 0.15rem 1rem;
+            border-radius: 50px;
+            margin-left: 5px;
+            white-space: nowrap;
+        }
+        .reset-links {
+            text-align: right;
+            padding: 0.8rem 2rem;
+            font-size: 0.95rem;
+            background: #10141c;
+            border-top: 1px solid #29313d;
+        }
+        .reset-links a {
+            color: #b4cdf0;
+            text-decoration: none;
+            margin: 0 12px;
+            cursor: pointer;
+            border-bottom: 1px dashed #62738b;
+        }
+        .reset-links a:hover {
+            color: white;
+            border-bottom-color: #b3caf0;
+        }
+        .footer-tips {
+            background: #12161e;
+            padding: 1.5rem 2rem 2rem;
+            border-top: 1px solid #2f3846;
+            color: #bcc9dc;
+        }
+        .footer-tips h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #d1def5;
+        }
+        .footer-tips ul {
+            list-style: none;
+        }
+        .footer-tips li {
+            margin-bottom: 0.8rem;
+            padding-left: 24px;
+            position: relative;
+        }
+        .footer-tips li::before {
+            content: "▶";
+            color: #7799cc;
+            font-size: 0.9rem;
+            position: absolute;
+            left: 0;
+            top: 2px;
+        }
+        .item a {
+            color: #e2eafc;
+            text-decoration: none;
+        }
+        .item a:hover {
+            text-decoration: underline;
+            color: white;
+        }
+        @media (max-width: 700px) {
+            .container { border-radius: 20px; }
+            .header, .info-bar, .section { padding: 1.2rem; }
+            .recipe-content { flex-direction: column; align-items: flex-start; }
+            .arrow { transform: rotate(90deg); margin: 5px 0; }
+            .checklist-item { padding: 1rem 1rem; }
+            .item img { width: 28px; height: 28px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>⚙️ Ингредиенты для крафта • Warframe</h1>
+        <div class="sub">
+            <span>✔ чек-лист с сохранением в браузере</span>
+            <span>🗂 72 рецепта</span>
+        </div>
+    </div>
+
+    <div class="info-bar">
+        <div class="warning">⚠️ Форма, катализатор, адаптер эксилус — НЕ переносятся</div>
+        <div class="updated">Обновлено: 17 февраля 2026 (Cephalon Scientia)</div>
+    </div>
+
+    <div class="toc">
+        <a href="#primary">🔫 Main</a>
+        <a href="#secondary">🔫 Second</a>
+        <a href="#melee">⚔️ Melee</a>
+        <a href="#archmelee">🛸 Acrh-wing</a>
+    </div>
+
+    <!-- PRIMARY -->
+    <div class="section" id="primary">
+        <h2>🔫 Main</h2>
+        <div class="checklist" id="checklist-primary"></div>
+    </div>
+
+    <!-- SECONDARY -->
+    <div class="section" id="secondary">
+        <h2>🔫 Second</h2>
+        <div class="checklist" id="checklist-secondary"></div>
+    </div>
+
+    <!-- MELEE -->
+    <div class="section" id="melee">
+        <h2>⚔️ Melee</h2>
+        <div class="checklist" id="checklist-melee"></div>
+    </div>
+
+    <!-- ARCHMELEE -->
+    <div class="section" id="archmelee">
+        <h2>🛸 Acrh-wing</h2>
+        <div class="checklist" id="checklist-archmelee"></div>
+    </div>
+
+    <!-- TIPS & RESETS -->
+    <div class="reset-links" id="global-reset">
+        <a id="uncheck-all">📭 снять все отметки</a>
+        <a id="check-all">✅ отметить всё</a>
+    </div>
+
+    <div class="footer-tips">
+        <h3>💡 Советы</h3>
+        <ul>
+            <li>Некоторые рецепты требуют до 3 слотов оружия последовательно (например Akjagara).</li>
+            <li>Не забирайте оружие из кузницы, если планируете использовать его как ингредиент — оно не будет видно в рецепте, пока не заберёте.</li>
+            <li>Прогресс сохраняется автоматически в локальном хранилище браузера.</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- Иконки из открытых источников (игровой вики/github) ----------
+        const ICON_BASE = "https://wiki.warframe.com/images/";
+
+        // Словарь предметов: название → файл (все имена приведены как в рецептах)
+       // Словарь предметов: название (рус) -> файл (оригинальный английский)
+// Словарь предметов: название → файл (все имена приведены как в рецептах)
+        const itemToIcon = {
+            "Cernos": "Cernos.png",
+            "Mutalist Cernos": "MutalistCernos.png",
+            "Proboscis Cernos": "ProboscisCernos.png",
+            "Drakgoon": "Drakgoon.png",
+            "Zarr": "Zarr.png",
+            "Latron": "Latron.png",
+            "Tiberon": "Tiberon.png",
+            "Miter": "Miter.png",
+            "Hikou": "Hikou.png",
+            "Panthera": "Panthera.png",
+            "Akbolto": "Akbolto.png",
+            "Dual Skana": "DualSkana.png",
+            "Akjagara": "Akjagara.png",
+            "Akstiletto": "Akstiletto.png",
+            "Aksomati": "Aksomati.png",
+            "Bolto": "Bolto.png",
+            "Viper": "Viper.png",
+            "Hystrix": "Hystrix.png",
+            "Bronco": "Bronco.png",
+            "Akbronco": "Akbronco.png",
+            "Bronco Prime": "BroncoPrime.png",
+            "Akbronco Prime": "AkbroncoPrime.png",
+            "Cestra": "Cestra.png",
+            "Dual Cestra": "DualCestra.png",
+            "Furis": "Furis.png",
+            "Afuris": "Afuris.png",
+            "Grakata": "Grakata.png",
+            "Twin Grakatas": "TwinGrakatas.png",
+            "Kohmak": "Kohmak.png",
+            "Twin Kohmak": "TwinKohmak.png",
+            "Kraken": "Kraken.png",
+            "Kulstar": "Kulstar.png",
+            "Lato": "Lato.png",
+            "Lex": "Lex.png",
+            "Aklex": "Aklex.png",
+            "Lex Prime": "LexPrime.png",
+            "Aklex Prime": "AklexPrime.png",
+            "Magnus": "Magnus.png",
+            "Akmagnus": "Akmagnus.png",
+            "Magnus Prime": "MagnusPrime.png",
+            "Akmagnus Prime": "AkmagnusPrime.png",
+            "Vasto": "Vasto.png",
+            "Akvasto": "Akvasto.png",
+            "Vasto Prime": "VastoPrime.png",
+            "Akvasto Prime": "AkvastoPrime.png",
+            "Twin Vipers": "TwinVipers.png",
+            "Sarpa": "Sarpa.png",
+            "Amphis": "Amphis.png",
+            "Sydon": "Sydon.png",
+            "Ankyros": "Ankyros.png",
+            "Tekko": "Tekko.png",
+            "Dual Cleavers": "DualCleavers.png",
+            "Ripkas": "Ripkas.png",
+            "Bo": "Bo.png",
+            "Cadus": "Cadus.png",
+            "Kunai": "Kunai.png",
+            "Tipedo": "Tipedo.png",
+            "Broken War": "BrokenWar.png",
+            "War": "War.png",
+            "Dual Kamas": "DualKamas.png",
+            "Dual Raza": "DualRaza.png",
+            "Dark Split-Sword (Heavy Blade)": "DarkSplitSwordHeavyBlade.png",
+            "Atomos": "Atomos.png",
+            "Twin Basolk": "TwinBasolk.png",
+            "Galatine": "Galatine.png",
+            "Paracesis": "Paracesis.png",
+            "Gammacor": "Gammacor.png",
+            "Heliocor": "Heliocor.png",
+            "Kama": "Kama.png",
+            "Kogake": "Kogake.png",
+            "Hirudo": "Hirudo.png",
+            "Krohkur": "Krohkur.png",
+            "Twin Krohkur": "TwinKrohkur.png",
+            "Kronen": "Kronen.png",
+            "Boltor": "Boltor.png",
+            "Boltace": "Boltace.png",
+            "Magistar": "Magistar.png",
+            "Sibear": "Sibear.png",
+            "Nikana": "Nikana.png",
+            "Dragon Nikana": "DragonNikana.png",
+            "Ninkondi": "Ninkondi.png",
+            "Shaku": "Shaku.png",
+            "Lesion": "Lesion.png",
+            "Furax": "Furax.png",
+            "Knux": "Knux.png",
+            // Редкие / альтернативные имена
+            "Dual Skana (for Dark Split-Sword)": "DualSkana.png",
+            "Vasto (for Redeemer)": "Vasto.png",
+            "Kama (for Dual Kamas)": "Kama.png",
+            "Ankyros (for Ripkas)": "Ankyros.png",
+            "Bolto (for Hystrix)": "Bolto.png",
+            "Viper (for Hystrix)": "Viper.png"
+        };
+
+        // Рецепты: структура для генерации
+        const recipes = {
+            primary: [
+                { from: ["Cernos"], to: "Mutalist Cernos" },
+                { from: ["Mutalist Cernos"], to: "Proboscis Cernos" },
+                { from: ["Drakgoon"], to: "Zarr" },
+                { from: ["Latron"], to: "Tiberon" },
+                { from: ["Miter", "Hikou"], to: "Panthera" }
+            ],
+            secondary: [
+                { from: ["Akbolto", "Dual Skana"], to: "Akjagara", note: "Akbolto из Bolto x2" },
+                { from: ["Akstiletto"], to: "Aksomati" },
+                { from: ["Bolto", "Bolto"], to: "Akbolto", note: "Need for Akjagara" },
+                { from: ["Bolto", "Viper"], to: "Hystrix" },
+                { from: ["Bronco", "Bronco"], to: "Akbronco" },
+                { from: ["Bronco Prime", "Bronco Prime"], to: "Akbronco Prime" },
+                { from: ["Cestra", "Cestra"], to: "Dual Cestra" },
+                { from: ["Furis", "Furis"], to: "Afuris" },
+                { from: ["Grakata", "Grakata"], to: "Twin Grakatas" },
+                { from: ["Kohmak", "Kohmak"], to: "Twin Kohmak" },
+                { from: ["Kraken"], to: "Kulstar" },
+                { from: ["Lato"], to: "Bolto", note: "1-й Bolto для Akbolto" },
+                { from: ["Lato"], to: "Bolto", note: "2-й Bolto (Akbolto)" },
+                { from: ["Lato"], to: "Bolto", note: "3-й Bolto (Hystrix)" },
+                { from: ["Lex", "Lex"], to: "Aklex" },
+                { from: ["Lex Prime", "Lex Prime"], to: "Aklex Prime" },
+                { from: ["Magnus", "Magnus"], to: "Akmagnus" },
+                { from: ["Magnus Prime", "Magnus Prime"], to: "Akmagnus Prime" },
+                { from: ["Vasto", "Vasto"], to: "Akvasto" },
+                { from: ["Vasto Prime", "Vasto Prime"], to: "Akvasto Prime" },
+                { from: ["Viper", "Viper"], to: "Twin Vipers" }
+            ],
+            melee: [
+                { from: ["Akstiletto"], to: "Sarpa" },
+                { from: ["Amphis"], to: "Sydon" },
+                { from: ["Ankyros"], to: "Tekko" },
+                { from: ["Ankyros", "Dual Cleavers"], to: "Ripkas" },
+                { from: ["Bo"], to: "Cadus" },
+                { from: ["Bo", "Kunai"], to: "Tipedo", note: "Need for Lesion" },
+                { from: ["Broken War"], to: "War" },
+                { from: ["Dual Kamas"], to: "Dual Raza" },
+                { from: ["Dual Skana"], to: "Dark Split-Sword (Heavy Blade)" },
+                { from: ["Dual Skana", "Vasto"], to: "Redeemer" },
+                { from: ["Dual Zoren", "Atomos"], to: "Twin Basolk" },
+                { from: ["Galatine"], to: "Paracesis" },
+                { from: ["Gammacor"], to: "Heliocor" },
+                { from: ["Kama", "Kama"], to: "Dual Kamas", note: "Need for Dual Raza" },
+                { from: ["Kogake"], to: "Hirudo" },
+                { from: ["Krohkur", "Krohkur"], to: "Twin Krohkur" },
+                { from: ["Kronen", "Boltor"], to: "Boltace" },
+                { from: ["Magistar"], to: "Sibear" },
+                { from: ["Nikana"], to: "Dragon Nikana" },
+                { from: ["Ninkondi"], to: "Shaku" },
+                { from: ["Tipedo"], to: "Lesion" }
+            ],
+            archmelee: [
+                { from: ["Furax"], to: "Knux" }
+            ]
+        };
+
+        // Функция построения HTML для одной строки
+        function renderItem(recipe, index, storageKey) {
+            const fromList = recipe.from.map(name => {
+                const icon = itemToIcon[name] || "Bolto.png"; // fallback
+                return `<span class="item"><img src="${ICON_BASE}${icon}" alt="${name}" loading="lazy"><a href="#">${name}</a></span>`;
+            }).join(' <span class="arrow">+</span> ');
+
+            const toIcon = itemToIcon[recipe.to] || "Bolto.png";
+            const toHtml = `<span class="item result"><img src="${ICON_BASE}${toIcon}" alt="${recipe.to}"><a href="#">${recipe.to}</a></span>`;
+            const noteHtml = recipe.note ? `<span class="small-note">${recipe.note}</span>` : '';
+
+            return `
+                <div class="checklist-item" data-index="${index}" data-key="${storageKey}">
+                    <input type="checkbox" class="recipe-checkbox">
+                    <div class="recipe-content">
+                        <div class="ingredient-group">${fromList}</div>
+                        <span class="arrow">→</span>
+                        ${toHtml} ${noteHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Заполняем секции
+        function fillSection(sectionId, recipeList, storageKey) {
+            const container = document.getElementById(sectionId);
+            if (!container) return;
+            let html = '';
+            recipeList.forEach((r, idx) => {
+                html += renderItem(r, idx, storageKey);
+            });
+            container.innerHTML = html;
+        }
+
+        fillSection('checklist-primary', recipes.primary, 'wf_primary');
+        fillSection('checklist-secondary', recipes.secondary, 'wf_secondary');
+        fillSection('checklist-melee', recipes.melee, 'wf_melee');
+        fillSection('checklist-archmelee', recipes.archmelee, 'wf_arch');
+
+        // === ЛОКАЛЬНОЕ ХРАНИЛИЩЕ ===
+        function loadAllCheckboxes() {
+            document.querySelectorAll('.checklist-item').forEach(item => {
+                const key = item.dataset.key;
+                const idx = item.dataset.index;
+                const cb = item.querySelector('input[type="checkbox"]');
+                if (!key || idx === undefined || !cb) return;
+                const storage = localStorage.getItem(key);
+                if (storage) {
+                    try {
+                        const arr = JSON.parse(storage);
+                        if (arr[parseInt(idx)] === true) cb.checked = true;
+                        else cb.checked = false;
+                    } catch (e) {}
+                } else {
+                    cb.checked = false;
+                }
+            });
+        }
+
+        function saveCheckbox(el) {
+            const itemDiv = el.closest('.checklist-item');
+            if (!itemDiv) return;
+            const key = itemDiv.dataset.key;
+            const idx = parseInt(itemDiv.dataset.index, 10);
+            if (isNaN(idx) || !key) return;
+
+            let storage = [];
+            try {
+                storage = JSON.parse(localStorage.getItem(key)) || [];
+            } catch (e) {
+                storage = [];
+            }
+            // расширяем массив если надо
+            const list = document.querySelectorAll(`.checklist-item[data-key="${key}"]`);
+            const desiredLength = list.length;
+            while (storage.length < desiredLength) storage.push(false);
+
+            storage[idx] = el.checked;
+            localStorage.setItem(key, JSON.stringify(storage));
+        }
+
+        // Обработчик на чекбоксы
+        document.addEventListener('change', (e) => {
+            if (e.target.classList.contains('recipe-checkbox')) {
+                saveCheckbox(e.target);
+            }
+        });
+
+        // Сброс / выделение всего
+        function setAllCheckboxes(value) {
+            document.querySelectorAll('.checklist-item').forEach(item => {
+                const cb = item.querySelector('input[type="checkbox"]');
+                if (cb) {
+                    cb.checked = value;
+                    saveCheckbox(cb);
+                }
+            });
+        }
+
+        document.getElementById('uncheck-all')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            setAllCheckboxes(false);
+        });
+        document.getElementById('check-all')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            setAllCheckboxes(true);
+        });
+
+        // Загружаем при старте
+        window.addEventListener('DOMContentLoaded', loadAllCheckboxes);
+
+        // Для иконок, которые могут не загрузиться – тихо игнорируем (внешний ресурс github)
+        // если что-то не грузится, покажет битую иконку, но всё работает.
+    })();
+</script>
+
+<!-- иконки из репозитория WFCD (открытые, с иконками оружия) -->
+<!-- fallback для совсем отсутствующих – не критично -->
+</body>
+</html>
